@@ -2,7 +2,7 @@
 
 ## Home
 
-- Dock: Left/Right scrolls the apps without wrapping. Up enters the top-right controls, starting with Art Mode or the last selected control. Left/Right moves between Art Mode, All apps and Settings. Down or Back returns to the selected app. The clock is at the top left.
+- Dock: Left/Right scrolls the apps without wrapping. Up enters the top-right controls, starting with Art Mode or the last selected control. Left/Right moves between Art Mode, All apps and Settings. Down or Back returns to the selected app. The clock, date, greeting and weather sit in the centre above the apps.
 - List: Up/Down scrolls the apps without wrapping. Right enters the bottom-right controls, aligned with the clock above. Up/Down moves between Art Mode, All apps and Settings. Left or Back returns to the selected app. The list fades at both ends as it scrolls.
 - OK opens the selected item. Focus alone never launches an app.
 - Icons-only apps and controls reveal their names when focused. App presentation and control presentation are independent.
@@ -91,7 +91,7 @@ The native Home operation and startup configuration from 19 October remain separ
 
 ## Clock and rendering
 
-Both layouts show the TV's local time in 12-hour format, without AM/PM or seconds. It updates at the minute boundary and on return to the launcher. No date or clock panel is shown.
+Home shows a centred 24-hour clock, the date, a greeting and Belgrade weather over a softly treated photograph. The clock updates at the minute boundary and on return to the launcher. Weather uses Open-Meteo. With a local Unsplash key the photograph follows Bonjourr Daylight collections and rotates about every 30 minutes; otherwise the bundled wallpapers are used.
 
 Photographic materials and blurred panel backgrounds are generated before packaging and stay aligned with the full-screen image. Photo colour and contrast metadata are also prepared offline. Navigation does not sample image pixels, run an optics engine or apply live backdrop blur. Flat backgrounds use matching light or dark panel colours. Focus feedback uses transforms and opacity; reduced motion removes animated scaling and movement while retaining opacity feedback.
 

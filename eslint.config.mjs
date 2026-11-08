@@ -7,7 +7,7 @@ export default [{
     globals: {
       window: 'readonly', document: 'readonly', Image: 'readonly', localStorage: 'readonly',
       setTimeout: 'readonly', clearTimeout: 'readonly', Promise: 'readonly',
-      FrameDevice: 'readonly', tizen: 'readonly'
+      XMLHttpRequest: 'readonly', FrameDevice: 'readonly', tizen: 'readonly'
     }
   },
   rules: {

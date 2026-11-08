@@ -4,9 +4,14 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { openPreview, root } from './browser.mjs';
 
 const KEY = 'cleanframe.home.v1';
-const PRIMARY = ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'abciview', 'sbs', 'applemusic'];
-const IDS = ['IkWsFHtOY9.Stremio', 'org.tizen.netflix-app', 'MCmYXNxgcu.DisneyPlus', '9Ur5IzDKqV.TizenYouTube', 'com.samsung.tv.aria-video', 'org.tizen.primevideo', 'mWK87Xghap.ABCiview', 'OyE7OuxlUi.SBSOnDemand', 'org.tizen.apple.apple-music'];
-const NAMES = ['Stremio', 'Netflix', 'Disney+', 'YouTube', 'Apple TV', 'Prime Video', 'ABC iview', 'SBS On Demand', 'Apple Music'];
+const PRIMARY = ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'applemusic'];
+const IDS = ['IkWsFHtOY9.Stremio', 'org.tizen.netflix-app', 'MCmYXNxgcu.DisneyPlus', '9Ur5IzDKqV.TizenYouTube', 'com.samsung.tv.aria-video', 'org.tizen.primevideo', 'org.tizen.apple.apple-music'];
+const NAMES = ['Stremio', 'Netflix', 'Disney+', 'YouTube', 'Apple TV', 'Prime Video', 'Apple Music'];
+const HBO = '5b8c3eb16b.BeamCTVDev';
+const WEATHER_FIXTURE = {
+  current: { temperature_2m: 2.4, weather_code: 0, is_day: 0 },
+  daily: { temperature_2m_max: [12.2], sunrise: ['2026-11-08T06:32'], sunset: ['2026-11-08T16:18'] }
+};
 const EXTRA = 'AbCdEf1234.FamilyApp', SPOTIFY = 'rJeHak5zRg.Spotify';
 const UNSAFE_NAME = 'Family <img src=x onerror="window.__catalogXss=1"> & TV';
 const CATALOG = IDS.map((id, i) => ({ id, name: NAMES[i], show: true, iconPath: '' })).concat([
@@ -20,7 +25,7 @@ const CATALOG = IDS.map((id, i) => ({ id, name: NAMES[i], show: true, iconPath: 
 const walls = JSON.parse(readFileSync(root + 'app/assets/wallpapers/SOURCES.json', 'utf8'));
 const out = root + '.local/qa/';
 mkdirSync(out, { recursive: true });
-const sourceFiles = ['app/main.js', 'app/device.js', 'app/index.html', 'app/style.css', 'app/config.xml', 'app/assets/wallpapers/SOURCES.json', 'app/assets/wallpapers/catalog.js', 'app/assets/adaptive-ink.js', 'app/assets/icons/metrics.js'];
+const sourceFiles = ['app/main.js', 'app/device.js', 'app/index.html', 'app/style.css', 'app/bonjourr.css', 'app/hero.js', 'app/weather.js', 'app/daylight.js', 'app/config.xml', 'app/assets/runtime-config.js', 'app/assets/wallpapers/SOURCES.json', 'app/assets/wallpapers/catalog.js', 'app/assets/adaptive-ink.js', 'app/assets/icons/metrics.js'];
 const hashes = () => Object.fromEntries(sourceFiles.map(f => [f, createHash('sha256').update(readFileSync(root + f)).digest('hex')]));
 const report = { scope: 'Production UI in Chromium; mock public Tizen API only; no TV contacted.', sourceBefore: hashes(), checks: [], failures: [], pageErrors: [], expectedNetworkFailures: [] };
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -129,6 +134,15 @@ async function page(options = {}, setup) {
     else if (failure.error !== 'net::ERR_ABORTED') report.pageErrors.push(failure);
   });
   await current.addInitScript(installHarness, { mock: true, catalog: CATALOG, minuteMs: 60000, seed: baseline(), ...options });
+  await current.route(/api\.open-meteo\.com/, route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    headers: { 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify(WEATHER_FIXTURE)
+  }));
+  await current.route('**/assets/runtime-config.js', route => route.fulfill({
+    contentType: 'application/javascript',
+    body: 'window.CleanFrameRuntime={unsplashAccessKey:' + JSON.stringify(options.unsplashKey || '') + '};'
+  }));
   if (setup) await setup(current);
   await current.goto(preview.baseURL + '/home/', { waitUntil: options.settleNetwork === false ? 'domcontentloaded' : 'load' });
   if (options.waitReady !== false) await ready();
@@ -264,7 +278,7 @@ try {
     check('Failed open-mode write retains prior photo', (await state()).wallpaper === walls[0].id && (await stored()).wallpaper === walls[0].id);
   });
   await run('Font recovery invalidates fallback measurements', async () => {
-    const seed = baseline({ dock: ['sbs', 'netflix'], lastApp: 'sbs', look: { bg: 'photo', layout: 'list', apps: 'both', font: 'manrope', controls: 'both', focus: 'glass', material: 'soft' } });
+    const seed = baseline({ dock: ['applemusic', 'netflix'], lastApp: 'applemusic', look: { bg: 'photo', layout: 'list', apps: 'both', font: 'manrope', controls: 'both', focus: 'glass', material: 'soft' } });
     const geometry = () => current.evaluate(() => ({
       plate: document.querySelector('#phScene > .ph-plate.is-current').style.width,
       names: [...document.querySelectorAll('.ph-name')].map(e => ({ text: e.textContent, size: e.style.fontSize, top: e.style.top }))
@@ -456,7 +470,7 @@ try {
   await run('Real catalogue and native launch boundary', async () => {
     await page(); await library();
     const names = await current.locator('[data-action^="apps.open."] .label').allTextContents();
-    check('Consumer catalogue excludes services, self and duplicate YouTube', names.length === 12 && names.filter(n => n === 'YouTube').length === 1 && !names.includes('CleanFrame') && !names.includes('Background worker'), names);
+    check('Consumer catalogue excludes services, self and duplicate YouTube', names.length === 10 && names.filter(n => n === 'YouTube').length === 1 && !names.includes('CleanFrame') && !names.includes('Background worker'), names);
     check('Installed names stay text, including HTML punctuation', names.includes(UNSAFE_NAME) && !(await current.evaluate(() => window.__catalogXss)));
     check('Exploration fixtures do not appear', !names.includes('Plex') && !names.includes('Jellyfin'));
     await act('apps.open.' + SPOTIFY); await current.waitForFunction(() => __tv.calls.length > 0);
@@ -497,7 +511,7 @@ try {
     check('Catalogue failure leaves Home intact', same((await state()).dock, PRIMARY));
     await current.evaluate(() => { __tv.catalogFailure = false; }); await act('apps.retry');
     await current.waitForSelector('[data-action="apps.open.' + EXTRA + '"]');
-    check('Retry displays real installed names', (await current.locator('[data-action^="apps.open."]').count()) === 12);
+    check('Retry displays real installed names', (await current.locator('[data-action^="apps.open."]').count()) === 10);
   });
   await run('Native icon and failed-image fallback', async () => {
     await page({ catalog: CATALOG.map(a => a.id === EXTRA ? { ...a, iconPath: '/home/assets/icons/netflix.svg' } : a) });
@@ -537,6 +551,8 @@ try {
     await act('editor.move.netflix'); await nav('down', 'ok');
     const moved = start.slice(); [moved[1], moved[2]] = [moved[2], moved[1]];
     check('Placed move persists immediately', same((await stored()).dock, moved));
+    await act('editor.add.' + SPOTIFY); await act('editor.add.' + HBO);
+    check('Home fills to nine apps', (await state()).dock.length === 9);
     await act('editor.add.' + EXTRA); check('Nine-app cap prevents addition', (await state()).dock.length === 9 && !(await state()).dock.includes(EXTRA));
     await remove('stremio'); await act('editor.add.' + EXTRA);
     check('Native app can be pinned with stable ID', (await stored()).dock.includes(EXTRA) && (await state()).dock.length === 9);
@@ -574,7 +590,7 @@ try {
       if (font === 'newsreader') {
         for (const layout of ['list', 'dock']) for (const controls of ['icons', 'both', 'text']) {
           await look({ layout, controls });
-          const wrong = await current.evaluate(() => [...document.querySelectorAll('.home .clock, .home .u, .home .u-label, .home .ph-name, .home .tile .label, .home .app-focus-name, .home .util-focus-label, .home .wall-keep')].filter(e => !/Newsreader/.test(getComputedStyle(e).fontFamily)).map(e => ({ cls: e.className, font: getComputedStyle(e).fontFamily })));
+          const wrong = await current.evaluate(() => [...document.querySelectorAll('.home .clock, .home .cap-date, .home .cap-greet, .home .weather-line, .home .u, .home .u-label, .home .ph-name, .home .tile .label, .home .app-focus-name, .home .util-focus-label, .home .wall-keep')].filter(e => e.getClientRects().length && !/Newsreader/.test(getComputedStyle(e).fontFamily)).map(e => ({ cls: e.className, font: getComputedStyle(e).fontFamily })));
           check('Newsreader covers Home text ' + layout + '/' + controls, wrong.length === 0, wrong);
         }
       }
@@ -933,7 +949,7 @@ try {
     check('Rapid browsing updates row focus before loading the preview', immediate.action === 'wallpaper.choose.' + walls[3].id && immediate.shown === walls[0].id, immediate);
     await wallpaperSettled(walls[3].id);
     const resources = await current.evaluate(() => performance.getEntriesByType('resource').map(r => ({ name: r.name, start: r.startTime })));
-    const latest = resources.find(r => r.name.endsWith('/wallpapers/' + walls[3].id + '.jpg'));
+    const latest = resources.find(r => r.name.includes('/materials/' + walls[3].id + '-field-blur.jpg'));
     check('Preview work waits for focus to settle', latest && latest.start - immediate.at >= 100, { delay: latest && latest.start - immediate.at });
     check('Fast skipped rows do not load their full wallpaper bundles', !resources.some(r => [walls[1].id, walls[2].id].some(id => r.name.endsWith('/wallpapers/' + id + '.jpg') || r.name.includes('/materials/' + id + '-'))));
     check('Debounced preview never saves from focus', same(await wallpaperSaved(), before));
@@ -943,7 +959,7 @@ try {
   });
   await run('Wallpaper newer previews cancel older queued applies', async () => {
     await page(); await wallpaper(); const before = await wallpaperSaved();
-    const first = walls[1].id, latest = walls[2].id, pattern = '**/wallpapers/' + first + '.jpg', held = [];
+    const first = walls[1].id, latest = walls[2].id, pattern = '**/materials/' + first + '-field-blur.jpg', held = [];
     let release;
     const blocked = new Promise(resolve => { release = resolve; });
     await current.route(pattern, async route => { held.push(route.request().url()); await blocked; await route.continue(); });
@@ -965,7 +981,7 @@ try {
     const applied = await wallpaperSaved();
     for (const [index, back] of [[2, 'remote'], [3, 'pointer']]) {
       if ((await state()).view !== 'wallpaper') await act('background.wallpaper');
-      const target = walls[index].id, pattern = '**/wallpapers/' + target + '.jpg', held = [];
+      const target = walls[index].id, pattern = '**/materials/' + target + '-field-blur.jpg', held = [];
       let release;
       const blocked = new Promise(resolve => { release = resolve; });
       await current.route(pattern, async route => { held.push(route.request().url()); await blocked; await route.continue(); });
@@ -983,8 +999,8 @@ try {
   await run('Wallpaper preview failure restores committed photo and retries preview only', async () => {
     await page(); await wallpaper(); const before = await wallpaperSaved();
     await nav('down'); await wallpaperSettled(walls[1].id);
-    const target = walls[2].id, pattern = '**/wallpapers/' + target + '.jpg';
-    current.__expectedFailures.push('/wallpapers/' + target + '.jpg');
+    const target = walls[2].id, pattern = '**/materials/' + target + '-field-blur.jpg';
+    current.__expectedFailures.push('/materials/' + target + '-field-blur.jpg');
     await current.route(pattern, route => route.abort('failed'));
     await nav('down'); await current.waitForFunction(() => ShoreQA.actions().includes('wallpaper.retry'));
     check('Failed browse restores the committed frame rather than another unsaved preview', (await state()).shown.wall === before.committed.wall && same(await wallpaperSaved(), before) && same(await wallpaperApplied(), ['wallpaper.choose.' + before.committed.wall]));
@@ -997,15 +1013,15 @@ try {
   });
   await run('Wallpaper explicit apply and storage failures preserve applied state', async () => {
     await page(); await wallpaper(); const before = await wallpaperSaved();
-    const target = walls[2].id, pattern = '**/wallpapers/' + target + '.jpg';
-    current.__expectedFailures.push('/wallpapers/' + target + '.jpg');
+    const target = walls[2].id, pattern = '**/materials/' + target + '-field-blur.jpg';
+    current.__expectedFailures.push('/materials/' + target + '-field-blur.jpg');
     await current.route(pattern, route => route.abort('failed'));
     await act('wallpaper.choose.' + target); await current.waitForFunction(() => ShoreQA.actions().includes('wallpaper.retry'));
     check('Failed explicit apply changes no committed photo, tick or storage', same(await wallpaperSaved(), before) && same(await wallpaperApplied(), ['wallpaper.choose.' + before.committed.wall]));
     await current.unroute(pattern); await act('wallpaper.retry'); await ready();
     check('Retry preserves explicit apply intent and stays in the picker', (await state()).committed.wall === target && (await state()).writes === before.writes + 1 && (await state()).view === 'wallpaper');
     const applied = await wallpaperSaved(), requests = [];
-    current.on('request', request => { if (request.url().endsWith('/wallpapers/' + walls[3].id + '.jpg') || request.url().includes('/materials/' + walls[3].id + '-')) requests.push(request.url()); });
+    current.on('request', request => { if (request.url().includes('/materials/' + walls[3].id + '-')) requests.push(request.url()); });
     await nav('down'); await wallpaperSettled(walls[3].id);
     const loadedRequests = requests.length;
     await current.evaluate(() => { __failWrites = true; }); await nav('ok');
@@ -1041,7 +1057,7 @@ try {
   await run('Physical-key repeats and Back hierarchy', async () => {
     await page(); await editor(); await remove('netflix');
     await current.keyboard.down('Enter'); await current.keyboard.down('Enter');
-    check('Held OK restores once without removing again', (await state()).dock.includes('netflix') && (await state()).dock.length === 9);
+    check('Held OK restores once without removing again', (await state()).dock.includes('netflix') && (await state()).dock.length === PRIMARY.length);
     await current.keyboard.up('Enter');
     await current.keyboard.down('Escape'); await current.keyboard.down('Escape');
     check('Held Back closes one layer only', (await call('where')).view === 'settings' && (await state()).focusAction === 'settings.editor');
@@ -1069,7 +1085,49 @@ try {
     const focus = (await state()).focusAction; await current.keyboard.press('ArrowDown');
     check('Warm return restores remote focus', (await state()).focusAction !== focus && (await call('where')).focusCount === 1);
     const clock = await current.locator('#caption .clock').textContent();
-    check('Live 12-hour clock has no AM/PM', /^\s*\d{1,2}:\d{2}\s*$/.test(clock), clock);
+    check('Live 24-hour clock has no AM/PM', /^\s*\d{2}:\d{2}\s*$/.test(clock), clock);
+  });
+  await run('Bonjourr hero, weather and bundled daylight fallback', async () => {
+    await page();
+    await current.waitForFunction(() => ShoreQA.state().hero && ShoreQA.state().hero.weather && ShoreQA.state().hero.weather.line);
+    const hero = (await state()).hero;
+    check('Greeting names Petar', /^Good (morning|afternoon|evening|night), Petar$/.test(hero.greeting), hero.greeting);
+    check('Date uses weekday and month', /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday), /.test(hero.date), hero.date);
+    check('Weather line comes from Open-Meteo', hero.weather.line === 'Clear. It is currently 2° with a high of 12° today.', hero.weather);
+    check('Clock is 24-hour', /^\d{2}:\d{2}$/.test(hero.clock), hero.clock);
+    const photo = await current.evaluate(() => document.getElementById('photo').currentSrc || document.getElementById('photo').src);
+    check('Missing Unsplash key uses pre-blurred bundled photo', /field-blur\.jpg/.test(photo), photo);
+    check('No photographer credit without Unsplash', (await current.locator('.photo-credit.is-on').count()) === 0);
+    check('Tiles stay on the remote Home path', (await call('where')).focusCount === 1 && String((await state()).focusAction).startsWith('home.app.'));
+  });
+  await run('Unsplash daylight shows credit and pings download_location', async () => {
+    let downloadPing = 0;
+    await page({ unsplashKey: 'testUnsplashKey0001' }, async p => {
+      await p.route(/api\.unsplash\.com/, route => {
+        const cors = {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS'
+        };
+        if (route.request().method() === 'OPTIONS') {
+          return route.fulfill({ status: 204, headers: cors });
+        }
+        return route.fulfill({
+          status: 200,
+          headers: Object.assign({ 'Content-Type': 'application/json' }, cors),
+          body: JSON.stringify({
+            urls: { small: preview.baseURL + '/home/assets/wallpapers/misty.jpg' },
+            user: { name: 'Test Photographer' },
+            links: { download_location: preview.baseURL + '/home/unsplash-download' }
+          })
+        });
+      });
+      await p.route('**/unsplash-download', route => { downloadPing++; return route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*' }, body: '{}' }); });
+    });
+    await current.waitForFunction(() => ShoreQA.state().hero && ShoreQA.state().hero.daylight && ShoreQA.state().hero.daylight.remote);
+    check('Unsplash credit is visible', /Test Photographer/.test(await current.locator('#credit').innerText()) && (await current.locator('.photo-credit.is-on').count()) === 1);
+    check('Download location is requested', downloadPing >= 1, downloadPing);
+    check('Remote photo flag is set', (await state()).hero.daylight.remote === true);
   });
   await run('Open rotation and browser fallback', async () => {
     await page({ seed: baseline({ mode: 'open' }) }); check('Open mode advances at cold start', (await state()).wallpaper === walls[1].id);

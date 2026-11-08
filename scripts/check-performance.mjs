@@ -95,7 +95,7 @@ try {
       getAppsInfo(ok) { setTimeout(() => ok(catalogue), 0); },
       launch(id, ok) { setTimeout(ok, 0); }
     } };
-    localStorage.setItem('cleanframe.home.v1', JSON.stringify({ dock: ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'abciview', 'sbs', 'applemusic'], wallpaper: 'misty', mode: 'fixed', theme: 'shore', lastApp: 'netflix' }));
+    localStorage.setItem('cleanframe.home.v1', JSON.stringify({ dock: ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'applemusic'], wallpaper: 'misty', mode: 'fixed', theme: 'shore', lastApp: 'netflix' }));
   });
   cdp = await page.context().newCDPSession(page);
   await cdp.send('Performance.enable');
@@ -103,6 +103,15 @@ try {
   await cdp.send('LayerTree.enable');
   cdp.on('LayerTree.layerTreeDidChange', e => { layers = e.layers || []; });
   const start = Date.now();
+  await page.route(/api\.open-meteo\.com/, route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    headers: { 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify({ current: { temperature_2m: 2, weather_code: 0, is_day: 1 }, daily: { temperature_2m_max: [12], sunrise: ['2026-11-08T06:32'], sunset: ['2026-11-08T16:18'] } })
+  }));
+  await page.route('**/assets/runtime-config.js', route => route.fulfill({
+    contentType: 'application/javascript',
+    body: 'window.CleanFrameRuntime={unsplashAccessKey:""};'
+  }));
   await page.goto(preview.baseURL + '/home/'); await ready(); await page.waitForLoadState('networkidle');
   report.startupMs = Date.now() - start;
   const startupResources = await page.evaluate(() => performance.getEntriesByType('resource').map(r => r.name));

@@ -1,0 +1,170 @@
+/* Bonjourr-style Home overlay. No live CSS blur; bundled photos use pre-rendered field-blur JPEGs. */
+
+.l-dock .caption{
+  left:160px;
+  right:160px;
+  top:88px;
+  max-width:none;
+  width:auto;
+  align-items:center;
+  text-align:center
+}
+.l-dock .clock{
+  font-size:168px;
+  line-height:176px;
+  font-weight:400;
+  letter-spacing:-6px;
+  text-shadow:0 2px 28px rgba(0,0,0,.32)
+}
+.l-dock .clock-digit{width:auto}
+.cap-date{
+  font-size:28px;
+  line-height:36px;
+  font-weight:500;
+  letter-spacing:.2px;
+  color:rgba(255,255,255,.88);
+  text-shadow:0 1px 8px rgba(0,0,0,.35)
+}
+.cap-greet{
+  font-size:36px;
+  line-height:44px;
+  font-weight:500;
+  letter-spacing:-.4px;
+  color:#fff;
+  text-shadow:0 1px 10px rgba(0,0,0,.38)
+}
+.cap-weather{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  max-width:920px
+}
+.weather-line{
+  font-size:22px;
+  line-height:30px;
+  font-weight:500;
+  color:rgba(255,255,255,.86);
+  text-shadow:0 1px 8px rgba(0,0,0,.35)
+}
+.weather-now{
+  display:flex;
+  align-items:center;
+  margin-top:10px
+}
+.weather-ico{
+  width:44px;
+  height:44px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.6;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+.weather-temp{
+  font-size:36px;
+  line-height:44px;
+  font-weight:400;
+  margin-left:10px;
+  text-shadow:0 1px 8px rgba(0,0,0,.35)
+}
+.l-dock .caption>.clock+.cap-date{margin-top:8px}
+.l-dock .caption>.cap-date+.cap-greet{margin-top:28px}
+.l-dock .caption>.cap-greet+.cap-weather{margin-top:10px}
+.l-dock .full-name{display:none}
+
+.l-list .cap-date,
+.l-list .cap-greet,
+.l-list .weather-line{
+  font-size:24px;
+  line-height:32px;
+  max-width:760px
+}
+.l-list .cap-weather{align-items:flex-end}
+.l-list .weather-now{display:none}
+.l-list .caption>.clock+.cap-date{margin-top:6px}
+
+.l-dock .bg>.scrim{
+  top:0;
+  height:1080px;
+  background:rgba(6,8,12,.22)
+}
+.l-dock .bg>.shade{opacity:.35}
+.l-dock .mat{opacity:0}
+
+.l-dock .tile-icon{
+  position:absolute;
+  left:22px;
+  top:8px;
+  width:96px;
+  height:96px;
+  border-radius:22px;
+  background:rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22)
+}
+.l-dock .tile .mark{
+  left:20px;
+  top:22px
+}
+.l-dock.a-icons .tile-icon{
+  left:12px;
+  top:12px;
+  width:96px;
+  height:96px
+}
+.l-dock.a-icons .tile .mark{left:10px;top:26px}
+.l-dock .tile .label{
+  left:4px;
+  right:4px;
+  top:112px;
+  font-size:22px;
+  line-height:28px;
+  letter-spacing:-.3px
+}
+.l-dock.a-text .tile-icon{display:none}
+.l-dock.a-text .tile .label{top:24px;font-size:26px;line-height:32px}
+
+.photo-credit{
+  position:absolute;
+  left:28px;
+  bottom:22px;
+  z-index:4;
+  font-size:16px;
+  line-height:22px;
+  font-weight:500;
+  letter-spacing:.1px;
+  color:rgba(255,255,255,.72);
+  text-shadow:0 1px 6px rgba(0,0,0,.4);
+  opacity:0;
+  pointer-events:none;
+  white-space:nowrap
+}
+.photo-credit.is-on{opacity:1}
+
+.font-custom .home .cap-date,
+.font-custom .home .cap-greet,
+.font-custom .home .weather-line,
+.font-custom .home .weather-temp,
+.font-custom .home .photo-credit{
+  font-family:var(--font-ui-family),sans-serif;
+  font-weight:var(--font-ui-weight)
+}
+.font-newsreader .home .cap-date,
+.font-newsreader .home .cap-greet,
+.font-newsreader .home .weather-line,
+.font-newsreader .home .weather-temp,
+.font-newsreader .home .photo-credit{
+  font-variation-settings:"opsz" 28
+}
+
+.bg-dark .cap-date,
+.bg-light .cap-date,
+.bg-dark .cap-greet,
+.bg-light .cap-greet,
+.bg-dark .weather-line,
+.bg-light .weather-line,
+.bg-dark .weather-temp,
+.bg-light .weather-temp{color:var(--ink);text-shadow:none}
+.bg-dark .l-dock .tile-icon,
+.bg-light .l-dock .tile-icon{background:rgba(127,127,127,.14)}
+.bg-dark .photo-credit,
+.bg-light .photo-credit{color:var(--mute);text-shadow:none}

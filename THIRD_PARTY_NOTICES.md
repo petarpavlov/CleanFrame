@@ -28,6 +28,8 @@ The fifteen photo pages were individually checked on 20 October 2026. Each displ
 
 Photographers retain their rights. Wallpapers, thumbnails, panel backgrounds and material fields derive from the credited photographs and retain their terms. The Unsplash licence permits copying, modification and distribution subject to its restrictions, including on selling unmodified images and building a competing image service.
 
+Optional Unsplash Daylight photographs are fetched at runtime with a locally injected access key. Follow Unsplash API guidelines: show the photographer credit and call `download_location` when a photo is displayed. Weather copy uses the public Open-Meteo forecast API for Belgrade. Neither runtime service replaces the licence terms of the bundled photographs.
+
 ## Development dependencies and exports
 
 Development dependencies retain the licences in their npm packages. They are not copied into the TV JavaScript runtime.
