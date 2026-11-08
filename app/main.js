@@ -5,7 +5,7 @@
   /* ---------- Bundled data ---------- */
   var ASSETS = 'assets/', ICONS = ASSETS + 'icons/', WP = ASSETS + 'wallpapers/';
   var CAP = 9, SCRIM_Y = 560;
-  var DOCK_MODES = { both: { tw: 288, th: 200, pitch: 296 }, text: { tw: 288, th: 104, pitch: 296 }, icons: { tw: 176, th: 144, pitch: 184 } };
+  var DOCK_MODES = { both: { tw: 140, th: 168, pitch: 164 }, text: { tw: 160, th: 80, pitch: 176 }, icons: { tw: 120, th: 120, pitch: 144 } };
   var GRID_ROW = 240, GRID_COL = 344, COLS = 5;
   var ED_ROW = 80, ED_SEP = 56, ED_VIEW = 752;
   var PH_TOP = 220, PH_PITCH = 128, PH_FULL = 5, PH_HEIGHT = 944, PH_COMPACT_TOP = 144, PH_COMPACT_PITCH = 88, PH_COMPACT_VISIBLE = 9;
@@ -20,8 +20,6 @@
     { id: 'youtube', name: 'YouTube', mark: true, appId: '9Ur5IzDKqV.TizenYouTube' },
     { id: 'appletv', name: 'Apple TV', mark: true, appId: 'com.samsung.tv.aria-video' },
     { id: 'primevideo', name: 'Prime Video', mark: true, appId: 'org.tizen.primevideo' },
-    { id: 'abciview', name: 'ABC iview', mark: true, appId: 'mWK87Xghap.ABCiview' },
-    { id: 'sbs', name: 'SBS On Demand', mark: true, appId: 'OyE7OuxlUi.SBSOnDemand' },
     { id: 'applemusic', name: 'Apple Music', mark: true, appId: 'org.tizen.apple.apple-music' }
   ];
   var PRIMARY = PRIMARY_APPS.map(function (a) { return a.id; }), APPS = PRIMARY_APPS.slice(), ALPHA = [];
@@ -36,7 +34,7 @@
   var KEY = 'cleanframe.home.v1', storageOk = true, catalog = { loading: false, loaded: false, error: null, request: 0, revision: 0 };
   var QA = window.ShoreQA = { minuteMs: window.ShoreQA && window.ShoreQA.minuteMs || 60000 };
   var FONTS = {
-    manrope: { name: 'Manrope', family: 'Manrope', display: 600, ui: 500, clock: 500 },
+    manrope: { name: 'Manrope', family: 'Manrope', display: 600, ui: 500, clock: 400 },
     montreal: { name: 'Neue Montreal', family: 'Study Montreal', display: 300, ui: 400, clock: 300 },
     mori: { name: 'Mori', family: 'Study Mori', display: 200, ui: 400, clock: 200 },
     pangram: { name: 'Pangram Sans', family: 'Study Pangram', display: 300, ui: 400, clock: 300 },
@@ -156,7 +154,7 @@
       opsz: serif ? role === 'display' ? 72 : role === 'clock' ? 48 : role === 'ui' && (!size || size === 28) ? 28 : 36 : 0 };
   }
   function measureFace(id, faces) {
-    var result = { roles: {}, digits: [], digitCell: 0 }, roles = { display: [88, 76, 56], clock: [48], primary: [30, 32, 34, 36, 40], ui: [28, 30, 48] };
+    var result = { roles: {}, digits: [], digitCell: 0 }, roles = { display: [88, 76, 56], clock: [48], primary: [18, 22, 28, 30, 32, 34, 36, 40], ui: [22, 28, 30, 48] };
     var face = id === 'newsreader' ? faces[0][0] : null, original = face ? face.variationSettings : '', r, widths, min, max;
     Object.keys(roles).forEach(function (role) {
       result.roles[role] = {};
@@ -246,7 +244,8 @@
   function fontShift(role, size) {
     var id = homeFont(), base = fontMetrics.manrope, metrics = fontMetrics[id], a, b;
     if (id === 'manrope' || !base || !metrics) return 0;
-    a = base.roles[role][size]; b = metrics.roles[role][size];
+    a = base.roles[role] && base.roles[role][size]; b = metrics.roles[role] && metrics.roles[role][size];
+    if (!a || !b) return 0;
     return (a.ascent - a.descent - a.cap - b.ascent + b.descent + b.cap) / 2;
   }
   function textWidth(text, size, weight, spacing, role) {
@@ -268,8 +267,8 @@
     if (fontMetrics[id] && !fontMetrics[id].fallback) widthCache[key] = width;
     return width;
   }
-  function dockLabelSize(id) { return S.c.apps === 'text' ? (textWidth(app(id).name, 40, 600, -.8, 'primary') > 264 ? 34 : 40) : textWidth(app(id).name, 36, 500, -.8, 'primary') > 280 ? 32 : 36; }
-  function reducedDockLabel(id) { return S.c.apps !== 'icons' && dockLabelSize(id) === (S.c.apps === 'text' ? 34 : 32); }
+  function dockLabelSize(id) { return S.c.apps === 'text' ? (textWidth(app(id).name, 28, 600, -.4, 'primary') > 148 ? 22 : 28) : textWidth(app(id).name, 22, 500, -.3, 'primary') > 132 ? 18 : 22; }
+  function reducedDockLabel(id) { return S.c.apps !== 'icons' && dockLabelSize(id) === (S.c.apps === 'text' ? 22 : 18); }
   function actionWidth(text) { return clamp(Math.ceil(textWidth(text, 30, 500, -.3) + 40), 288, 400); }
   function photoLabel(id, compact) {
     var text = app(id).name, size = compact ? 56 : 88, limit = compact ? 640 : 992, width = textWidth(text, size, 600, -1.8, 'display');
@@ -1072,6 +1071,7 @@
   function renderHome(t) {
     var hs = homeState(t);
     renderCaption(t, hs);
+    renderCredit();
     renderUtils(hs);
     if (S.c.layout === 'list') renderList(hs);
     else { photoMode = null; renderDock(hs); }
@@ -1079,18 +1079,33 @@
   }
 
   function clockText() {
-    var d = new Date(), h = d.getHours() % 12 || 12, m = d.getMinutes();
-    return h + ':' + (m < 10 ? '0' : '') + m;
+    return window.CleanFrameHero ? window.CleanFrameHero.clockText() : '';
   }
   function clockHtml() {
-    var text = clockText(), metrics = fontMetrics[homeFont()];
-    if (!metrics || !metrics.digitCell) return text;
-    return text.replace(/[0-9]/g, function (digit) { return '<span class="clock-digit">' + digit + '</span>'; });
+    return clockText();
+  }
+  function weatherHtml() {
+    var w = window.CleanFrameWeather && window.CleanFrameWeather.state();
+    if (!w || !w.line) return '';
+    return '<span class="cap-weather"><span class="weather-line">' + esc(w.line) + '</span><span class="weather-now">' + (w.icon || '') + '<span class="weather-temp">' + esc(w.tempLabel) + '</span></span></span>';
   }
   function renderCaption(t, hs) {
     var html = '<span class="clock">' + clockHtml() + '</span>';
+    if (window.CleanFrameHero) {
+      html += '<span class="cap-date">' + esc(window.CleanFrameHero.dateText()) + '</span>';
+      html += '<span class="cap-greet">' + esc(window.CleanFrameHero.greeting()) + '</span>';
+    }
+    html += weatherHtml();
     if (S.c.apps !== 'icons' && hs.items[hs.i] && (S.c.layout === 'list' ? photoLabel(hs.items[hs.i].id, false).size < 88 || photoLabel(hs.items[hs.i].id, false).ellipsis : hs.zone === 'apps' && reducedDockLabel(hs.items[hs.i].id))) html += '<span class="cap-line full-name">' + esc(app(hs.items[hs.i].id).name) + '</span>';
     setHTML(caption, html);
+  }
+  function renderCredit() {
+    var info = window.CleanFrameDaylight && window.CleanFrameDaylight.credit && window.CleanFrameDaylight.credit();
+    var el = $('credit');
+    if (!el) return;
+    if (!info || !info.name) { setHTML(el, ''); el.className = 'photo-credit'; return; }
+    setHTML(el, 'Photo by ' + esc(info.name) + ' on Unsplash');
+    el.className = 'photo-credit is-on';
   }
 
   function utilBtn(z, i, action, inner, extra, name) {
@@ -1167,18 +1182,18 @@
       x = 280; placement = phFields[photoPlateIndex]._placement;
       y = placement.y + placement.height / 2 - 24;
     } else {
-      x = clamp(dockAnchorCenter - width / 2, 140, 1780 - width); y = 932;
+      x = clamp(dockAnchorCenter - width / 2, 140, 1780 - width); y = 968;
     }
     appFocusName.style.left = x + 'px'; appFocusName.style.top = (y + fontShift('primary', S.c.layout === 'list' ? 40 : 36)) + 'px';
     appFocusName.className = 'app-focus-name is-on';
   }
 
   function dockGeom(n) {
-    var m = DOCK_MODES[S.c.apps], vis = Math.max(1, Math.min(5, n)), shelfW = vis * m.pitch - 8, w = shelfW + 32;
-    var broad = S.geom === 'broad' && n > 5;
+    var m = DOCK_MODES[S.c.apps], vis = Math.max(1, Math.min(7, n)), shelfW = vis * m.pitch - 8, w = shelfW + 32;
+    var broad = S.geom === 'broad' && n > 7;
     if (n < 0) { w = 912; shelfW = 880; }
     else if (broad) { w = 1728; shelfW = 1696; }
-    return { x: Math.round((1920 - w) / 2), y: 908 - m.th - 32, h: m.th + 32, w: w, shelf: shelfW, vis: vis, broad: broad, empty: n < 0, tw: m.tw, th: m.th, pitch: m.pitch };
+    return { x: Math.round((1920 - w) / 2), y: 760, h: m.th + 32, w: w, shelf: shelfW, vis: vis, broad: broad, empty: n < 0, tw: m.tw, th: m.th, pitch: m.pitch };
   }
   /* Five centred: the window moves one tile when focus passes an edge. Broad: keep a
      148px glimpse of the neighbour, as the current dock does. */
@@ -1202,8 +1217,8 @@
     var a, body;
     if (it.kind === 'add') return '<span class="add">' + icon('plus') + '</span><span class="label">' + (full ? 'Home is full' : 'Add app') + '</span>';
     a = app(it.id);
-    body = S.c.apps === 'text' ? '' : appMark(a, S.c.apps === 'icons' ? 136 : 120, S.c.apps === 'icons' ? 88 : 72, S.c.apps === 'icons' ? 72 : 58);
-    return body + (S.c.apps === 'icons' ? '' : '<span class="label" style="font-size:' + dockLabelSize(a.id) + 'px;top:' + ((S.c.apps === 'text' ? 28 : 128) + fontShift('primary', dockLabelSize(a.id))) + 'px"><span class="label-ink">' + esc(a.name) + '</span></span>') + '<span class="nudge nudge-l">' + icon('left') + '</span><span class="nudge nudge-r">' + icon('right') + '</span>';
+    body = S.c.apps === 'text' ? '' : '<span class="tile-icon">' + appMark(a, S.c.apps === 'icons' ? 88 : 72, S.c.apps === 'icons' ? 56 : 48, S.c.apps === 'icons' ? 52 : 42) + '</span>';
+    return body + (S.c.apps === 'icons' ? '' : '<span class="label" style="font-size:' + dockLabelSize(a.id) + 'px;top:' + ((S.c.apps === 'text' ? 24 : 112) + fontShift('primary', dockLabelSize(a.id))) + 'px"><span class="label-ink">' + esc(a.name) + '</span></span>') + '<span class="nudge nudge-l">' + icon('left') + '</span><span class="nudge nudge-r">' + icon('right') + '</span>';
   }
   /* A wide label can reach the shelf before its icon. Check the rendered icon box,
      including during the track's 180ms transition, so both disappear together. */
@@ -1660,7 +1675,7 @@
   function swapImg(k, im) { var old = IMG[k]; if (old === im) return; im.style.cssText = old.style.cssText; if (old.id) im.id = old.id; old.parentNode.replaceChild(im, old); IMG[k] = im; }
   function bundleKey(look) { return look.wall + '|' + look.material; }
   function loadBundle(look, token, done) {
-    var imgs = { photo: makeImg('photo', WP + look.wall + '.jpg'), bg: makeImg('sheet-bg', WP + look.wall + '-panel.jpg') }, keys, left, allOk = true;
+    var imgs = { photo: makeImg('photo', 'assets/materials/' + look.wall + '-field-blur.jpg'), bg: makeImg('sheet-bg', WP + look.wall + '-panel.jpg') }, keys, left, allOk = true;
     imgs.mat = makeImg('mat-img', matSrc(look.wall, look.material));
     imgs.field = makeImg('ph-field-img', fieldSrc(look.wall, look.material));
     imgs.fieldAlt = makeImg('ph-field-img', fieldSrc(look.wall, look.material));
@@ -1681,6 +1696,7 @@
     S.shown = { bg: look.bg, wall: look.wall, material: look.material, font: look.font };
     phFields.concat(utFields).forEach(function (el) { var p = el._placement; if (p) fieldTransform(el, p.x, p.y, p.width, p.height); });
     S.wallShown = look.wall; S.wallPending = null; S.wallError = null;
+    if (window.CleanFrameDaylight && window.CleanFrameDaylight.reapply) window.CleanFrameDaylight.reapply();
   }
   function cleanPatch(patch) {
     var out = {}, k;
@@ -1875,11 +1891,16 @@
   window.addEventListener('focus', function () { FrameDevice.cancelSource(); release(); refreshInputsOnReturn(); focusStage(); after(); updateClock(); });
   document.addEventListener('visibilitychange', function () {
     heldKeys = {};
-    if (document.hidden) { FrameDevice.cancelSource(); pauseRotation(); clearTimeout(clockTimer); }
+    if (document.hidden) {
+      FrameDevice.cancelSource(); pauseRotation(); clearTimeout(clockTimer);
+      if (window.CleanFrameDaylight) window.CleanFrameDaylight.pause();
+    }
     else {
       release();
       if (S.c.bg === 'photo' && !S.pending && !S.previewBundle && (!committedBundle || S.bundleKey !== bundleKey(S.c))) setLook({}, { transient: true, startup: true });
       refreshInputsOnReturn(); after(); updateClock(); focusStage();
+      if (window.CleanFrameDaylight) window.CleanFrameDaylight.resume();
+      if (window.CleanFrameWeather) window.CleanFrameWeather.pull();
     }
   });
   window.addEventListener('resize', fit);
@@ -1900,6 +1921,13 @@
     out.wallpaperPicker = t.id === 'wallpaper' ? { candidate: WALLS[t.i].id, applied: S.c.wall, shown: S.wallShown, pending: t.previewDue || S.wallPending,
       queuedApplying: !!t.applyPending, applyPending: t.applyPending, failed: t.failedId, zone: t.f.zone, top: t.top, visible: WALL_VISIBLE, backdrop: IMG.bg.src } : null;
     out.undo = S.undo.map(function (u) { return u.label; }); out.storageOk = storageOk;
+    out.hero = {
+      clock: clockText(),
+      date: window.CleanFrameHero ? window.CleanFrameHero.dateText() : '',
+      greeting: window.CleanFrameHero ? window.CleanFrameHero.greeting() : '',
+      weather: window.CleanFrameWeather ? window.CleanFrameWeather.state() : null,
+      daylight: window.CleanFrameDaylight ? window.CleanFrameDaylight.state() : null
+    };
     return JSON.parse(JSON.stringify(out));
   };
   QA.where = function () {
@@ -1919,4 +1947,15 @@
   initialise();
   setLook({}, { transient: true, startup: true });
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();
+  if (window.CleanFrameWeather) {
+    window.CleanFrameWeather.subscribe(function (data) {
+      if (window.CleanFrameDaylight && data) window.CleanFrameDaylight.setSun(data.sunrise, data.sunset);
+      if (top().id === 'home' || isSettingsDetail(top())) { renderCaption(top(), homeState(top())); renderCredit(); }
+    });
+    window.CleanFrameWeather.start();
+  }
+  if (window.CleanFrameDaylight) {
+    window.CleanFrameDaylight.onCredit = function () { renderCredit(); };
+    window.CleanFrameDaylight.start();
+  }
 })();

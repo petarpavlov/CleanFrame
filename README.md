@@ -28,7 +28,7 @@ The public preview uses the included Manrope, Geist and Newsreader fonts.
 ## What you can change
 
 - Choose a List or Dock layout, with icons, names or both.
-- Use a photograph, light or dark background, with a simple 12-hour clock.
+- Use a photograph, light or dark background, with a 24-hour clock, greeting and weather.
 - Adjust typography, focus and glass materials through the same Settings interface.
 - Choose and reorder Home apps; discover installed apps on the TV.
 - Select from fifteen wallpapers and save your preferences locally.

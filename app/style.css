@@ -140,7 +140,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .cue{position:absolute;top:768px;left:0;width:48px;height:48px;border-radius:24px;background:rgba(8,14,18,.28);color:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 160ms linear;pointer-events:none}
 .cue.is-on{opacity:.8}
 .cue .ico{width:30px;height:30px;stroke-width:2}
-.dock-action{position:absolute;left:0;top:932px;width:288px;height:64px;border-radius:32px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:500;letter-spacing:-.3px;white-space:nowrap;color:var(--mute);background:none;opacity:0;pointer-events:none;transition:transform var(--t) var(--ease),opacity 120ms linear,background-color 120ms linear}
+.dock-action{position:absolute;left:0;top:968px;width:288px;height:64px;border-radius:32px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:500;letter-spacing:-.3px;white-space:nowrap;color:var(--mute);background:none;opacity:0;pointer-events:none;transition:transform var(--t) var(--ease),opacity 120ms linear,background-color 120ms linear}
 .dock-action.is-on{opacity:1;pointer-events:auto}
 .dock-action.is-focus{background:var(--solid);color:var(--solid-ink)}
 .dock-action>span{display:block;max-width:100%;padding:0 20px;overflow:hidden;text-overflow:ellipsis}

@@ -16,8 +16,8 @@ class PreviewServer(ThreadingHTTPServer):
 class Preview(SimpleHTTPRequestHandler):
     def send_head(self):
         route = unquote(urlsplit(self.path).path)
-        if route in ['/home/assets/font-catalog.js', '/home/assets/private-fonts.css'] or route.startswith('/home/assets/private-fonts/'):
-            source = font_overlay(include_private=self.server.include_private_fonts).get(route[len('/home/'):])
+        if route in ['/home/assets/font-catalog.js', '/home/assets/private-fonts.css', '/home/assets/runtime-config.js'] or route.startswith('/home/assets/private-fonts/'):
+            source = font_overlay(include_private=self.server.include_private_fonts, include_unsplash_key=True).get(route[len('/home/'):])
             if source is None:
                 self.send_error(404, 'File not found')
                 return None

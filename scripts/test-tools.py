@@ -131,6 +131,29 @@ class ToolTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             write_widget_archive(output, root=self.root, include_private=False)
 
+    def test_unsplash_key_is_injected_from_local_config(self):
+        output = self.root / 'widget.wgt'
+        write_widget_archive(output, root=self.root, include_private=False, include_unsplash_key=True)
+        with zipfile.ZipFile(output) as archive:
+            blank = archive.read('assets/runtime-config.js').decode()
+        self.assertIn('"unsplashAccessKey":""', blank.replace(' ', ''))
+        key = 'testUnsplashKey0001'
+        (self.root / '.local/unsplash.json').write_text(json.dumps({'unsplash_access_key': key}))
+        write_widget_archive(output, root=self.root, include_private=False, include_unsplash_key=True)
+        with zipfile.ZipFile(output) as archive:
+            injected = archive.read('assets/runtime-config.js').decode()
+        self.assertIn(key, injected)
+        app_copy = '\n'.join(path.read_text() for path in (self.root / 'app').rglob('*') if path.is_file())
+        self.assertNotIn(key, app_copy)
+        public = self.root / 'public.wgt'
+        write_widget_archive(public, root=self.root, include_private=False)
+        with zipfile.ZipFile(public) as archive:
+            self.assertIn('"unsplashAccessKey":""', archive.read('assets/runtime-config.js').decode().replace(' ', ''))
+        (self.root / '.local/unsplash.json').write_text(json.dumps({'unsplash_access_key': 'short'}))
+        write_widget_archive(output, root=self.root, include_private=False, include_unsplash_key=True)
+        with zipfile.ZipFile(output) as archive:
+            self.assertIn('"unsplashAccessKey":""', archive.read('assets/runtime-config.js').decode().replace(' ', ''))
+
     def test_export_ignores_local_signing_config(self):
         output = self.root / 'public.wgt'
         write_widget_archive(output, root=self.root, include_private=False)
@@ -273,6 +296,7 @@ with zipfile.ZipFile(target, 'a') as archive:
 
     def test_public_check_reads_index_and_history(self):
         for name in ['scripts/check-public.py', 'scripts/font_assets.py', 'scripts/local_config.py', 'scripts/private_files.py',
+                     'scripts/runtime_config.py',
                      'app/assets/fonts/SOURCES.json', 'app/assets/manrope.woff2', 'app/assets/manrope-OFL.txt',
                      'app/assets/fonts/geist/OFL.txt', 'app/assets/fonts/newsreader/OFL.txt']:
             target = self.root / name

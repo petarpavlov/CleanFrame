@@ -10,6 +10,7 @@ import re
 import zipfile
 from local_config import override_identity
 from private_files import check_widget, generated_path, private_path, secret_content
+from runtime_config import runtime_overlay
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_FONT_IDS = ['geist', 'newsreader']
@@ -41,7 +42,7 @@ def is_runtime_source(name):
     return not re.fullmatch(r'assets/wallpapers/[^/]+-glass-\d+\.png', name)
 
 
-def font_overlay(root=ROOT, include_private=True):
+def font_overlay(root=ROOT, include_private=True, include_unsplash_key=None):
     """Return package-relative paths mapped to bytes or allowlisted font files."""
     sources = (root / '.local/research/font-candidates').resolve()
     assets = {}
@@ -63,13 +64,16 @@ def font_overlay(root=ROOT, include_private=True):
     assets['assets/private-fonts.css'] = ('\n'.join(css) + '\n').encode()
     assets['assets/font-catalog.js'] = ('window.CleanFramePrivateFontIDs = '
                                        + json.dumps(private_ids + PUBLIC_FONT_IDS) + ';\n').encode()
+    if include_unsplash_key is None:
+        include_unsplash_key = include_private
+    assets.update(runtime_overlay(root, include_key=include_unsplash_key))
     return assets
 
 
-def write_widget_archive(output, root=ROOT, include_private=True, identity=None):
+def write_widget_archive(output, root=ROOT, include_private=True, identity=None, include_unsplash_key=None):
     """Create an unsigned archive without reading signing or device settings."""
     app = root / 'app'
-    overlay = font_overlay(root, include_private)
+    overlay = font_overlay(root, include_private, include_unsplash_key=include_unsplash_key)
     if identity is not None:
         overlay['config.xml'] = override_identity((app / 'config.xml').read_bytes(), identity)
     with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED, allowZip64=False) as package:
